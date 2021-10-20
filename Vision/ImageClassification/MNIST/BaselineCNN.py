@@ -1,5 +1,7 @@
 import os
 import sys
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning)
 import torch
 import torchvision
 import torch.nn as nn
@@ -105,7 +107,7 @@ def train(epoch: int) -> None:
             train_loss / num_data, 100. * correct / num_data))
         sys.stdout.write('\r\033[K' + print_string)
         sys.stdout.flush()
-    
+
     # Print final loss and accuracy
     print_string = ('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}\tAccuracy: {:.2f}%'.format(
                 epoch, num_data, len(train_loader.dataset),
@@ -142,7 +144,7 @@ def val() -> None:
             # Check predictions and compute accuracy
             pred = output.data.max(1, keepdim=True)[1]
             correct += pred.eq(target.data.view_as(pred)).sum()
-    
+
     # Compute average validation loss
     val_loss /= len(val_loader.dataset)
 
@@ -202,6 +204,7 @@ if __name__ == '__main__':
 
     # Check if GPU is available
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    print('Using device: ', device, '\n', sep='')
 
     # Load MNIST training dataset (download if not present)
     # The pixel values images are in the range [0, 1]
@@ -245,14 +248,14 @@ if __name__ == '__main__':
 
         # Print validation metrics after every training epoch
         val()
-    
+
     # Print test metrics of the final model
     test()
 
     # Create models directory if it doesn't exist
     if not os.path.exists(model_dir):
         os.makedirs(model_dir)
-    
+
     # Save final model parameters and optimizer state
     torch.save(network.state_dict(), os.path.join(model_dir, 'model.pth'))
     torch.save(optimizer.state_dict(), os.path.join(model_dir, 'optimizer.pth'))
