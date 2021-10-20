@@ -92,7 +92,7 @@ def train(epoch: int) -> None:
         data, target = data.to(device), target.to(device)
 
         # Compute network output and update network weights
-        optimizer.zero_grad()
+        optimizer.zero_grad(set_to_none=True)
         output = network(data)
         loss = F.cross_entropy(output, target)
         loss.backward()
@@ -208,12 +208,12 @@ if __name__ == '__main__':
 
     # Set seed for replicability
     random_seed = 42
-    torch.backends.cudnn.enabled = False
     torch.manual_seed(random_seed)
 
     # Check if GPU is available
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print('Using device: ', device, '\n', sep='')
+    torch.backends.cudnn.benchmarks = True
 
     # Load MNIST training dataset (download if not present)
     # The pixel values images are in the range [0, 1]
@@ -228,8 +228,10 @@ if __name__ == '__main__':
     train_data, val_data = torch.utils.data.random_split(full_dataset, [train_size, val_size])
 
     # Create training and validation dataloaders from the datasets
-    train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, shuffle=True)
-    val_loader = torch.utils.data.DataLoader(val_data, batch_size=batch_size, shuffle=True)
+    train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, shuffle=True,
+        num_workers=1, pin_memory=torch.cuda.is_available())
+    val_loader = torch.utils.data.DataLoader(val_data, batch_size=batch_size, shuffle=True,
+        num_workers=1, pin_memory=torch.cuda.is_available())
 
     # Load MNIST test data (download if not present)
     # The pixel values images are in the range [0, 1]
@@ -238,7 +240,8 @@ if __name__ == '__main__':
         transform=torchvision.transforms.Compose([
             torchvision.transforms.ToTensor()
         ])),
-        batch_size=batch_size, shuffle=True)
+        batch_size=batch_size, shuffle=True,
+        num_workers=1, pin_memory=torch.cuda.is_available())
 
     # Create the network object and send it to device
     network = Net()
