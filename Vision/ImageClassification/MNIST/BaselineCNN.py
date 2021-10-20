@@ -125,11 +125,14 @@ def train(epoch: int) -> None:
     sys.stdout.write('\r\033[K' + print_string + '\n')
     sys.stdout.flush()
 
-def val() -> None:
+def val() -> tuple[float, float]:
     """
     Validation loop
 
     Computes and prints performance of the model on the validation data.
+
+    Returns:
+        tuple[float, float]: Returns (loss, accuracy) tuple for the validation set
     """
 
     # Set training = False
@@ -156,17 +159,23 @@ def val() -> None:
 
     # Compute average validation loss
     val_loss /= len(val_loader.dataset)
+    val_acc = 1.0 * correct / len(val_loader.dataset)
 
     # Print validation metrics
-    print('Validation set: Loss: {:.4f}, Accuracy: {}/{} ({:.2f}%)\n'.format(
+    print('Validation set: Loss: {:.4f}, Accuracy: {}/{} ({:.2f}%)'.format(
         val_loss, correct, len(val_loader.dataset),
-        100. * correct / len(val_loader.dataset)))
+        100 * val_acc))
 
-def test() -> None:
+    return (val_loss, val_acc)
+
+def test() -> tuple[float, float]:
     """
     Test loop
 
     Computes and prints performance of the model on the test data.
+
+    Returns:
+        tuple[float, float]: Returns (loss, accuracy) tuple for the test set
     """
 
     # Set training = False
@@ -193,11 +202,14 @@ def test() -> None:
 
     # Compute average test loss
     test_loss /= len(test_loader.dataset)
+    test_acc = 1.0 * correct / len(test_loader.dataset)
 
     # Print test metrics
-    print('\nTest set: Loss: {:.4f}, Accuracy: {}/{} ({:.2f}%)\n'.format(
+    print('\nTest set: Loss: {:.4f}, Accuracy: {}/{} ({:.2f}%)'.format(
         test_loss, correct, len(test_loader.dataset),
-        100. * correct / len(test_loader.dataset)))
+        100 * test_acc))
+
+    return (test_loss, test_acc)
 
 if __name__ == '__main__':
     # Hyperparameters
@@ -250,8 +262,20 @@ if __name__ == '__main__':
     # Create Adam optimizer
     optimizer = torch.optim.Adam(network.parameters(), lr=learning_rate)
 
+    # Create models directory if it doesn't exist
+    if not os.path.exists(model_dir):
+        os.makedirs(model_dir)
+
     # Initial validation to check random output of the network
-    val()
+    [initial_loss, initial_acc] = val()
+
+    # Save initial model parameters and optimizer state
+    print('Saving initial model!\n')
+    torch.save(network.state_dict(), os.path.join(model_dir, 'model.pth'))
+    torch.save(optimizer.state_dict(), os.path.join(model_dir, 'optimizer.pth'))
+
+    # Best loss to save best model
+    best_loss = initial_loss
 
     # Training
     for epoch in range(1, n_epochs + 1):
@@ -259,15 +283,18 @@ if __name__ == '__main__':
         train(epoch)
 
         # Print validation metrics after every training epoch
-        val()
+        [loss, acc] = val()
+
+        # Save model if loss is better than the best loss
+        if loss < best_loss:
+            best_loss = loss
+            print('Saving model!')
+            torch.save(network.state_dict(), os.path.join(model_dir, 'model.pth'))
+            torch.save(optimizer.state_dict(), os.path.join(model_dir, 'optimizer.pth'))
+        print('')
+
+    # Load best model
+    network.load_state_dict(torch.load(os.path.join(model_dir, 'model.pth')))
 
     # Print test metrics of the final model
     test()
-
-    # Create models directory if it doesn't exist
-    if not os.path.exists(model_dir):
-        os.makedirs(model_dir)
-
-    # Save final model parameters and optimizer state
-    torch.save(network.state_dict(), os.path.join(model_dir, 'model.pth'))
-    torch.save(optimizer.state_dict(), os.path.join(model_dir, 'optimizer.pth'))
