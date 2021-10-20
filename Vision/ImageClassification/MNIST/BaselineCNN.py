@@ -1,5 +1,6 @@
 import os
 import sys
+from typing import Tuple
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning)
 import time
@@ -125,14 +126,14 @@ def train(epoch: int) -> None:
     sys.stdout.write('\r\033[K' + print_string + '\n')
     sys.stdout.flush()
 
-def val() -> tuple[float, float]:
+def val() -> Tuple[float, float]:
     """
     Validation loop
 
     Computes and prints performance of the model on the validation data.
 
     Returns:
-        tuple[float, float]: Returns (loss, accuracy) tuple for the validation set
+        Tuple[float, float]: Returns (loss, accuracy) tuple for the validation set
     """
 
     # Set training = False
@@ -168,14 +169,14 @@ def val() -> tuple[float, float]:
 
     return (val_loss, val_acc)
 
-def test() -> tuple[float, float]:
+def test() -> Tuple[float, float]:
     """
     Test loop
 
     Computes and prints performance of the model on the test data.
 
     Returns:
-        tuple[float, float]: Returns (loss, accuracy) tuple for the test set
+        Tuple[float, float]: Returns (loss, accuracy) tuple for the test set
     """
 
     # Set training = False
