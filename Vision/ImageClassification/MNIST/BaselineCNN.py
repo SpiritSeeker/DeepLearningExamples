@@ -2,6 +2,9 @@ import os
 import sys
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning)
+import time
+import datetime
+
 import torch
 import torchvision
 import torch.nn as nn
@@ -81,6 +84,7 @@ def train(epoch: int) -> None:
     train_loss = 0
     correct = 0
     num_data = 0
+    start_time = time.time()
 
     # Training loop
     for batch_idx, (data, target) in enumerate(train_loader):
@@ -100,18 +104,23 @@ def train(epoch: int) -> None:
         correct += pred.eq(target.data.view_as(pred)).sum()
         num_data += len(data)
 
+        time_per_batch = (time.time() - start_time) / (batch_idx + 1)
+        eta = (len(train_loader) - batch_idx - 1) * time_per_batch
+
         # Print loss and accuracy after every batch
-        print_string = ('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}\tAccuracy: {:.2f}%'.format(
+        print_string = ('Train Epoch: {} [{}/{} ({:.0f}%)] - ETA: {:.0f}s - Loss: {:.6f} - Accuracy: {:.2f}%'.format(
             epoch, num_data, len(train_loader.dataset),
-            100. * batch_idx / len(train_loader),
+            100. * batch_idx / len(train_loader), eta,
             train_loss / num_data, 100. * correct / num_data))
         sys.stdout.write('\r\033[K' + print_string)
         sys.stdout.flush()
 
+    total_time = time.time() - start_time
     # Print final loss and accuracy
-    print_string = ('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}\tAccuracy: {:.2f}%'.format(
+    print_string = ('Train Epoch: {} [{}/{} ({:.0f}%)] - Time: {} - Loss: {:.6f} - Accuracy: {:.2f}%'.format(
                 epoch, num_data, len(train_loader.dataset),
                 100. * batch_idx / len(train_loader),
+                str(datetime.timedelta(seconds=total_time)),
                 train_loss / num_data, 100. * correct / num_data))
     sys.stdout.write('\r\033[K' + print_string + '\n')
     sys.stdout.flush()
