@@ -1,0 +1,5 @@
+# Files
+*.pth
+
+# Directories
+.DS_Store
